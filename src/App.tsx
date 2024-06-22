@@ -1,26 +1,28 @@
+// App.tsx
+import Box from '@mui/material/Box';
+import Grid from '@mui/material/Grid';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
 import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import CameraApp from "./components/modules/CameraApp";
+import Header from "./components/modules/Header";
 
-function App() {
+
+const theme = createTheme();
+
+const App: React.FC = () => {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <ThemeProvider theme={theme}>
+      <Header />
+      <Box sx={{ flexGrow: 1}}>
+        <Grid container justifyContent="center">
+          <Grid item xs={9}>
+            <CameraApp/>
+          </Grid>
+        </Grid>
+      </Box>
+    </ThemeProvider>
   );
 }
 
 export default App;
+

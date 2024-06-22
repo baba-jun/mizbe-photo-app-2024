@@ -1,0 +1,11 @@
+version: "3"
+
+services:
+  mizbe-photo-app:
+    build: .
+    volumes:
+      - ./:/usr/src/app
+    command: npm start
+    ports:
+      - "3000:3000"
+
