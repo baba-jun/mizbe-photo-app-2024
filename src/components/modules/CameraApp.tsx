@@ -67,6 +67,16 @@ const CameraApp: React.FC = () => {
     }
   };
 
+  const savePicture = () => {
+    if (canvasRef.current) {
+      const dataUrl = canvasRef.current.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = 'photo.png';
+      link.click();
+    }
+  };
+
   return (
     <div>
       <div>
@@ -92,6 +102,7 @@ const CameraApp: React.FC = () => {
         </div>
       )}
       <canvas ref={canvasRef} style={{ display: 'none' }}></canvas>
+      <button onClick={savePicture}>Save Picture</button>
     </div>
   );
 };
