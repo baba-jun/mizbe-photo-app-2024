@@ -14,9 +14,9 @@ const App: React.FC = () => {
   return (
     <ThemeProvider theme={theme}>
       <Header />
-      <Box sx={{ flexGrow: 1}}>
+      <Box sx={{ flexGrow: 1, width: '100%'}}>
         <Grid container justifyContent="center">
-          <Grid>
+          <Grid xs={12}>
             <CameraApp/>
           </Grid>
         </Grid>

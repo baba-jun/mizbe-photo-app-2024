@@ -12,13 +12,13 @@ const Carousel: React.FC<CarouselProps> = ({ images, onImageSelect }) => {
     dots: true,
     infinite: false,
     speed: 500,
-    slidesToShow: 4,
+    slidesToShow: 5,
     slidesToScroll: 1,
     responsive: [
       {
         breakpoint: 1024,
         settings: {
-          slidesToShow: 3,
+          slidesToShow: 5,
           slidesToScroll: 1,
           infinite: true,
           dots: true,
@@ -27,14 +27,14 @@ const Carousel: React.FC<CarouselProps> = ({ images, onImageSelect }) => {
       {
         breakpoint: 600,
         settings: {
-          slidesToShow: 2,
+          slidesToShow: 5,
           slidesToScroll: 1,
         },
       },
       {
         breakpoint: 480,
         settings: {
-          slidesToShow: 1,
+          slidesToShow: 5,
           slidesToScroll: 1,
         },
       },
@@ -42,11 +42,11 @@ const Carousel: React.FC<CarouselProps> = ({ images, onImageSelect }) => {
   };
 
   return (
-    <div style={{ margin: '0 auto', width: '80%' }}>
+    <div style={{ margin: '0 auto', width: '100%' }}>
       <Slider {...settings}>
         {images.map((image, index) => (
           <div key={index} onClick={() => onImageSelect(image)}>
-            <img src={image} alt={`carousel-${index}`} style={{ width: '100%' }} />
+            <img src={image} alt={`carousel-${index}`} style={{margin: '0 auto', width: '70%' }} />
           </div>
         ))}
       </Slider>

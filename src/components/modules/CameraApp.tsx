@@ -9,7 +9,14 @@ import Modal from '@mui/material/Modal';
 import Grid from '@mui/material/Unstable_Grid2';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import React, { useEffect, useRef, useState } from 'react';
-import frame from '../../frame/frame-red.png';
+import frameBlue from '../../frame/frame-blue.png';
+import frameGreen from '../../frame/frame-green.png';
+import framePurple from '../../frame/frame-purple.png';
+import frameRed from '../../frame/frame-red.png';
+import frameYellow from '../../frame/frame-yellow.png';
+import Carousel from './Carousel';
+
+
 
 const theme = createTheme({
   palette: {
@@ -27,6 +34,15 @@ const CameraApp: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const images = [
+      frameRed,
+      frameBlue,
+      frameGreen,
+      framePurple,
+      frameYellow,
+  ];
+  const [selectedImage, setSelectedImage] = useState<string>(images[0]);
+
 
   useEffect(() => {
     const getDevices = async () => {
@@ -75,7 +91,7 @@ const CameraApp: React.FC = () => {
       const context = canvasRef.current.getContext('2d');
       if (context) {
         const FrameImg = new Image();
-        FrameImg.src = frame;
+        FrameImg.src = selectedImage;
         canvasRef.current.width = videoRef.current.videoWidth;
         canvasRef.current.height = videoRef.current.videoHeight;
         context.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
@@ -109,12 +125,16 @@ const CameraApp: React.FC = () => {
     setIsModalOpen(false);
   };
 
+  const drawImageOnCanvas = (imageSrc: string) => {
+    setSelectedImage(imageSrc);
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <div className='camera-container'>
         <div className='video-container'>
           <video ref={videoRef} autoPlay playsInline style={{ width: '100%' }} />
-          <img src={frame} alt='frame-img' />
+          <img src={selectedImage} alt='frame-img' />
         </div>
         <div className='camera-control-container'>
           <Box sx={{ flexGrow: 1, textAlign: 'center' }}>
@@ -129,6 +149,9 @@ const CameraApp: React.FC = () => {
             </Grid>
           </Box>
         </div>
+        <Box sx={{ mt: 2, textAlign: 'center'  }}>
+            <Carousel images={images} onImageSelect={drawImageOnCanvas} />
+          </Box>
         <canvas ref={canvasRef} style={{ display: 'none' }} />
         <Modal open={isModalOpen} onClose={handleCloseModal}>
           <Box sx={{
