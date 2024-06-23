@@ -1,0 +1,5 @@
+.camera-control-container{
+    position: relative;
+    padding: 2.5vh 2vw;
+    background: linear-gradient(to bottom right, #6b4e9b, #5a85cc);
+}
