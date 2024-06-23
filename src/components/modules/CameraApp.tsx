@@ -46,6 +46,7 @@ const CameraApp: React.FC = () => {
 
   useEffect(() => {
     const getDevices = async () => {
+      await navigator.mediaDevices.getUserMedia({video: true});
       try {
         const mediaDevices = await navigator.mediaDevices.enumerateDevices();
         const videoDevices = mediaDevices.filter(device => device.kind === 'videoinput');
@@ -67,11 +68,11 @@ const CameraApp: React.FC = () => {
           if (stream) {
             stream.getTracks().forEach(track => track.stop());
           }
+          
           const newStream = await navigator.mediaDevices.getUserMedia({
             video: {
               deviceId: { exact: selectedDeviceId },
-              width: { ideal: 720 },
-              height: { ideal: 1080 },
+              aspectRatio: {exact: 1.5}
             },
           });
           setStream(newStream);
@@ -133,7 +134,7 @@ const CameraApp: React.FC = () => {
     <ThemeProvider theme={theme}>
       <div className='camera-container'>
         <div className='video-container'>
-          <video ref={videoRef} autoPlay playsInline style={{ width: '100%' }} />
+          <video ref={videoRef} autoPlay playsInline style={{ width: '100%', objectFit: 'cover', aspectRatio: '2/3', objectPosition: 'center'}} />
           <img src={selectedImage} alt='frame-img' />
         </div>
         <div className='camera-control-container'>

@@ -14,6 +14,8 @@ code {
 
 .video-container {
   position: relative;
+  width: 100%;
+  aspect-ratio: 2/3;
 }
 
 .video-container img {
