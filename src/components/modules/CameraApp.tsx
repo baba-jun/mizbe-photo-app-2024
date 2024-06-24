@@ -32,6 +32,7 @@ const CameraApp: React.FC = () => {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const video = document.getElementById('video');
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const images = [
@@ -68,10 +69,12 @@ const CameraApp: React.FC = () => {
           if (stream) {
             stream.getTracks().forEach(track => track.stop());
           }
-          
+
           const newStream = await navigator.mediaDevices.getUserMedia({
             video: {
               deviceId: { exact: selectedDeviceId },
+              width: {ideal: 3000},
+              height: {ideal: 3000},
               aspectRatio: {exact: 1.5}
             },
           });
@@ -93,10 +96,13 @@ const CameraApp: React.FC = () => {
       if (context) {
         const FrameImg = new Image();
         FrameImg.src = selectedImage;
-        canvasRef.current.width = videoRef.current.videoWidth;
         canvasRef.current.height = videoRef.current.videoHeight;
-        context.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
-        context.drawImage(FrameImg, 0, 0, canvasRef.current.width, canvasRef.current.height);
+        canvasRef.current.width = canvasRef.current.height / 1.5;
+        const OriginalVideoWirth = videoRef.current.videoWidth;
+        const CroppedVideWidth = canvasRef.current.width
+        const OriginalVideoHeight = canvasRef.current.height;
+        context.drawImage(videoRef.current, (OriginalVideoWirth - CroppedVideWidth)/2, 0, CroppedVideWidth, OriginalVideoHeight, 0, 0, canvasRef.current.width, canvasRef.current.height);
+        context.drawImage(FrameImg, 0, 0, canvasRef.current.width,  canvasRef.current.height);
         const dataUrl = canvasRef.current.toDataURL('image/jpeg');
         setPhotoDataUrl(dataUrl);
         setIsModalOpen(true);
@@ -169,7 +175,7 @@ const CameraApp: React.FC = () => {
             <Box sx={{ flexGrow: 1, textAlign: 'center' }}>
                 <Grid container spacing={2} alignItems="flex-end">
                     <Grid justifyContent="center" xs={12}>
-                      {photoDataUrl && <img src={photoDataUrl} alt="Captured" style={{ maxWidth: '100%', maxHeight: '40vh' }} />}
+                      {photoDataUrl && <img src={photoDataUrl} alt="Captured" style={{ width: '100%'}} />}
                     </Grid>
                     <Grid justifyContent="center" xs={4}>
                         <IconButton onClick={handleCloseModal}><KeyboardReturnRoundedIcon sx={{ fontSize: 50 }}></KeyboardReturnRoundedIcon></IconButton>
