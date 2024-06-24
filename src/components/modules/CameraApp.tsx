@@ -87,7 +87,7 @@ const CameraApp: React.FC = () => {
       }
     };
     getStream();
-  }, [selectedDeviceId, stream]);
+  }, [selectedDeviceId]);
 
   const takePicture = () => {
     if (canvasRef.current && videoRef.current) {
