@@ -9,11 +9,12 @@ import Modal from '@mui/material/Modal';
 import Grid from '@mui/material/Unstable_Grid2';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import React, { useEffect, useRef, useState } from 'react';
-import frameBlue from '../../frame/frame-blue.png';
-import frameGreen from '../../frame/frame-green.png';
-import framePurple from '../../frame/frame-purple.png';
-import frameRed from '../../frame/frame-red.png';
-import frameYellow from '../../frame/frame-yellow.png';
+import LogoCharaAFrame from '../../frame/logo-charaA-frame.png';
+import LogoCharaBFrame from '../../frame/logo-charaB-frame.png';
+import LogoCharaCFrame from '../../frame/logo-charaC-frame.png';
+import LogoFrame from '../../frame/logo-frame.png';
+
+
 import Carousel from './Carousel';
 
 
@@ -32,15 +33,13 @@ const CameraApp: React.FC = () => {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const video = document.getElementById('video');
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const images = [
-      frameRed,
-      frameBlue,
-      frameGreen,
-      framePurple,
-      frameYellow,
+      LogoFrame,
+      LogoCharaAFrame,
+      LogoCharaBFrame,
+      LogoCharaCFrame,
   ];
   const [selectedImage, setSelectedImage] = useState<string>(images[0]);
 
@@ -88,7 +87,7 @@ const CameraApp: React.FC = () => {
       }
     };
     getStream();
-  }, [selectedDeviceId]);
+  }, [selectedDeviceId, stream]);
 
   const takePicture = () => {
     if (canvasRef.current && videoRef.current) {
@@ -156,11 +155,11 @@ const CameraApp: React.FC = () => {
             </Grid>
           </Box>
         </div>
-        <Box sx={{ mt: 2, textAlign: 'center'  }}>
+        <Box sx={{ py: 2, textAlign: 'center', backgroundColor: '#262626'  }}>
             <Carousel images={images} onImageSelect={drawImageOnCanvas} />
           </Box>
         <canvas ref={canvasRef} style={{ display: 'none' }} />
-        <Modal open={isModalOpen} onClose={handleCloseModal}>
+        <Modal sx={{width: '70%', margin: 'auto'}} open={isModalOpen} onClose={handleCloseModal}>
           <Box sx={{
             position: 'absolute',
             top: '50%',
@@ -168,7 +167,6 @@ const CameraApp: React.FC = () => {
             transform: 'translate(-50%, -50%)',
             width: '100%',
             bgcolor: 'background.paper',
-            border: '2px solid #000',
             boxShadow: 24,
             p: 4,
           }}>
@@ -177,8 +175,8 @@ const CameraApp: React.FC = () => {
                     <Grid justifyContent="center" xs={12}>
                       {photoDataUrl && <img src={photoDataUrl} alt="Captured" style={{ width: '100%'}} />}
                     </Grid>
-                    <Grid justifyContent="center" xs={4}>
-                        <IconButton onClick={handleCloseModal}><KeyboardReturnRoundedIcon sx={{ fontSize: 50 }}></KeyboardReturnRoundedIcon></IconButton>
+                    <Grid justifyContent="center" sx={{textAlign: 'left'}} xs={4}>
+                        <IconButton onClick={handleCloseModal}><KeyboardReturnRoundedIcon sx={{ fontSize: 40 }}></KeyboardReturnRoundedIcon></IconButton>
                     </Grid>
                     <Grid justifyContent="center" xs={4}>
                         <IconButton onClick={savePicture}><DownloadRoundedIcon sx={{ fontSize: 70, color: '#00a0e9' }}></DownloadRoundedIcon></IconButton>

@@ -27,14 +27,14 @@ const Carousel: React.FC<CarouselProps> = ({ images, onImageSelect }) => {
       {
         breakpoint: 600,
         settings: {
-          slidesToShow: 5,
+          slidesToShow: 4,
           slidesToScroll: 1,
         },
       },
       {
         breakpoint: 480,
         settings: {
-          slidesToShow: 5,
+          slidesToShow: 4,
           slidesToScroll: 1,
         },
       },
@@ -46,12 +46,14 @@ const Carousel: React.FC<CarouselProps> = ({ images, onImageSelect }) => {
       <Slider {...settings}>
         {images.map((image, index) => (
           <div key={index} onClick={() => onImageSelect(image)}>
-            <img src={image} alt={`carousel-${index}`} style={{margin: '0 auto', width: '70%' }} />
+            <img src={image} alt={`carousel-${index}`} style={{margin: '0 auto', width: '75%', border: '2px solid white' }} />
           </div>
         ))}
       </Slider>
     </div>
   );
 };
+
+
 
 export default Carousel;

@@ -5,6 +5,8 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  max-width: 600px;
+  margin: auto;
 }
 
 code {
@@ -15,7 +17,7 @@ code {
 .video-container {
   position: relative;
   width: 100%;
-  aspect-ratio: 2/3;
+  margin-bottom: -4px;
 }
 
 .video-container img {
@@ -23,6 +25,5 @@ code {
   top: 0;
   left: 0;
   width: 100%;
-  height: 100%;
   object-fit: cover;
 }
