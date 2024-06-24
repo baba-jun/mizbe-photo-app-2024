@@ -8,13 +8,8 @@ import IconButton from '@mui/material/IconButton';
 import Modal from '@mui/material/Modal';
 import Grid from '@mui/material/Unstable_Grid2';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import React, { useEffect, useRef, useState } from 'react';
-import LogoCharaAFrame from '../../frame/logo-charaA-frame.png';
-import LogoCharaBFrame from '../../frame/logo-charaB-frame.png';
-import LogoCharaCFrame from '../../frame/logo-charaC-frame.png';
-import LogoFrame from '../../frame/logo-frame.png';
 
-
+import { useEffect, useRef, useState } from 'react';
 import Carousel from './Carousel';
 
 
@@ -27,7 +22,9 @@ const theme = createTheme({
   },
 });
 
-const CameraApp: React.FC = () => {
+const CameraApp = (props: {bgColor: string, frames: string[]}) => {
+  const {bgColor} = props
+  const {frames} = props
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -35,73 +32,69 @@ const CameraApp: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const images = [
-      LogoFrame,
-      LogoCharaAFrame,
-      LogoCharaBFrame,
-      LogoCharaCFrame,
-  ];
-  const [selectedImage, setSelectedImage] = useState<string>(images[0]);
+  const [selectedImage, setSelectedImage] = useState<string>(frames[0]);
 
+  const getDevices = async (): Promise<void> => {
+    await navigator.mediaDevices.getUserMedia({ video: true });
+    try {
+      const mediaDevices: MediaDeviceInfo[] = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices: MediaDeviceInfo[] = mediaDevices.filter(device => device.kind === 'videoinput');
+      setDevices(videoDevices);
+      if (videoDevices.length > 0) {
+        setSelectedDeviceId(videoDevices[0].deviceId);
+      }
+    } catch (error) {
+      console.error('Error getting devices:', error);
+    }
+  };
 
-  useEffect(() => {
-    const getDevices = async () => {
-      await navigator.mediaDevices.getUserMedia({video: true});
+  const getStream = async (): Promise<void> => {
+    if (selectedDeviceId) {
       try {
-        const mediaDevices = await navigator.mediaDevices.enumerateDevices();
-        const videoDevices = mediaDevices.filter(device => device.kind === 'videoinput');
-        setDevices(videoDevices);
-        if (videoDevices.length > 0) {
-          setSelectedDeviceId(videoDevices[0].deviceId);
+        if (stream) {
+          stream.getTracks().forEach((track: MediaStreamTrack) => track.stop());
+        }
+        const newStream: MediaStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            deviceId: { exact: selectedDeviceId },
+            width: { ideal: 3000 },
+            height: { ideal: 3000 },
+            aspectRatio: { exact: 1.5 }
+          },
+        });
+        setStream(newStream);
+        if (videoRef.current) {
+          (videoRef.current as HTMLVideoElement).srcObject = newStream;
         }
       } catch (error) {
-        console.error('Error getting devices:', error);
+        console.error('Error getting stream:', error);
       }
-    };
-    getDevices();
-  }, []);
+    }
+  };
 
-  useEffect(() => {
-    const getStream = async () => {
-      if (selectedDeviceId) {
-        try {
-          if (stream) {
-            stream.getTracks().forEach(track => track.stop());
-          }
-
-          const newStream = await navigator.mediaDevices.getUserMedia({
-            video: {
-              deviceId: { exact: selectedDeviceId },
-              width: {ideal: 3000},
-              height: {ideal: 3000},
-              aspectRatio: {exact: 1.5}
-            },
-          });
-          setStream(newStream);
-          if (videoRef.current) {
-            videoRef.current.srcObject = newStream;
-          }
-        } catch (error) {
-          console.error('Error getting stream:', error);
-        }
-      }
-    };
-    getStream();
-  }, [selectedDeviceId]);
-
-  const takePicture = () => {
+  const takePicture = (): void => {
     if (canvasRef.current && videoRef.current) {
-      const context = canvasRef.current.getContext('2d');
+      const context: CanvasRenderingContext2D | null = canvasRef.current.getContext('2d');
       if (context) {
         const FrameImg = new Image();
         FrameImg.src = selectedImage;
         canvasRef.current.height = videoRef.current.videoHeight;
         canvasRef.current.width = canvasRef.current.height / 1.5;
-        const OriginalVideoWirth = videoRef.current.videoWidth;
-        const CroppedVideWidth = canvasRef.current.width
-        const OriginalVideoHeight = canvasRef.current.height;
-        context.drawImage(videoRef.current, (OriginalVideoWirth - CroppedVideWidth)/2, 0, CroppedVideWidth, OriginalVideoHeight, 0, 0, canvasRef.current.width, canvasRef.current.height);
-        context.drawImage(FrameImg, 0, 0, canvasRef.current.width,  canvasRef.current.height);
+        const OriginalVideoWidth: number = videoRef.current.videoWidth;
+        const CroppedVideoWidth: number = canvasRef.current.width;
+        const OriginalVideoHeight: number = canvasRef.current.height;
+        context.drawImage(
+          videoRef.current,
+          (OriginalVideoWidth - CroppedVideoWidth) / 2,
+          0,
+          CroppedVideoWidth,
+          OriginalVideoHeight,
+          0,
+          0,
+          canvasRef.current.width,
+          canvasRef.current.height
+        );
+        context.drawImage(FrameImg, 0, 0, canvasRef.current.width, canvasRef.current.height);
         const dataUrl = canvasRef.current.toDataURL('image/jpeg');
         setPhotoDataUrl(dataUrl);
         setIsModalOpen(true);
@@ -109,7 +102,15 @@ const CameraApp: React.FC = () => {
     }
   };
 
-  const savePicture = () => {
+  const switchCamera = (): void => {
+    if (devices.length > 1) {
+      const currentIndex: number = devices.findIndex(device => device.deviceId === selectedDeviceId);
+      const nextIndex: number = (currentIndex + 1) % devices.length;
+      setSelectedDeviceId(devices[nextIndex].deviceId);
+    }
+  };
+
+  const savePicture = (): void => {
     if (canvasRef.current) {
       const dataUrl = canvasRef.current.toDataURL('image/png');
       const link = document.createElement('a');
@@ -119,47 +120,57 @@ const CameraApp: React.FC = () => {
     }
   };
 
-  const switchCamera = () => {
-    if (devices.length > 1) {
-      const currentIndex = devices.findIndex(device => device.deviceId === selectedDeviceId);
-      const nextIndex = (currentIndex + 1) % devices.length;
-      setSelectedDeviceId(devices[nextIndex].deviceId);
-    }
-  };
-
-  const handleCloseModal = () => {
+  const handleCloseModal = (): void => {
     setIsModalOpen(false);
   };
 
-  const drawImageOnCanvas = (imageSrc: string) => {
+  const drawImageOnCanvas = (imageSrc: string): void => {
     setSelectedImage(imageSrc);
   };
 
+
+  useEffect(() => {
+    getDevices();
+  }, []);
+
+  useEffect(() => {
+    getStream();
+  }, [selectedDeviceId]);
+
+
   return (
     <ThemeProvider theme={theme}>
-      <div className='camera-container'>
-        <div className='video-container'>
-          <video ref={videoRef} autoPlay playsInline style={{ width: '100%', objectFit: 'cover', aspectRatio: '2/3', objectPosition: 'center'}} />
-          <img src={selectedImage} alt='frame-img' />
-        </div>
-        <div className='camera-control-container'>
-          <Box sx={{ flexGrow: 1, textAlign: 'center' }}>
+      <Box sx={{ maxWidth: '100%' }}>
+        <Box sx={{
+            position: 'relative',
+            width: '100%',
+            marginBottom: '-4px',
+            }}>
+          <video ref={videoRef} autoPlay playsInline style={{ width: '100%', objectFit: 'cover', aspectRatio: '2/3', objectPosition: 'center' }} />
+          <img src={selectedImage} alt='frame-img' style={{position: 'absolute', top: 0, left: 0, width: '100%', objectFit: 'cover'}}/>
+        </Box>
+          <Box sx={{
+            flexGrow: 1,
+            textAlign: 'center',
+            position: 'relative',
+            padding: '2.5vh 2vw',
+            background: bgColor,
+            }}>
             <Grid container>
               <Grid justifyContent="center" xs={4}>
-                <Button color='secondary' onClick={switchCamera}><CameraswitchRoundedIcon sx={{ fontSize: 50 }} /></Button>
+                <Button color='secondary' onClick={switchCamera}><CameraswitchRoundedIcon sx={{ fontSize: 50, "@media screen and (min-width:700px)":{fontSize: 60}  }} /></Button>
               </Grid>
               <Grid justifyContent="center" xs={4}>
-                <Button color='secondary' onClick={takePicture}><CameraRoundedIcon sx={{ fontSize: 50 }} /></Button>
+                <Button color='secondary' onClick={takePicture}><CameraRoundedIcon sx={{ fontSize: 50, "@media screen and (min-width:700px)":{fontSize: 60}  }} /></Button>
               </Grid>
               <Grid xs={4}></Grid>
             </Grid>
           </Box>
-        </div>
-        <Box sx={{ py: 2, textAlign: 'center', backgroundColor: '#262626'  }}>
-            <Carousel images={images} onImageSelect={drawImageOnCanvas} />
-          </Box>
+        <Box sx={{ py: 2, textAlign: 'center', backgroundColor: '#262626' }}>
+          <Carousel images={frames} onImageSelect={drawImageOnCanvas} />
+        </Box>
         <canvas ref={canvasRef} style={{ display: 'none' }} />
-        <Modal sx={{width: '70%', margin: 'auto'}} open={isModalOpen} onClose={handleCloseModal}>
+        <Modal sx={{ width: '70%', margin: 'auto' }} open={isModalOpen} onClose={handleCloseModal}>
           <Box sx={{
             position: 'absolute',
             top: '50%',
@@ -171,25 +182,25 @@ const CameraApp: React.FC = () => {
             p: 4,
           }}>
             <Box sx={{ flexGrow: 1, textAlign: 'center' }}>
-                <Grid container spacing={2} alignItems="flex-end">
-                    <Grid justifyContent="center" xs={12}>
-                      {photoDataUrl && <img src={photoDataUrl} alt="Captured" style={{ width: '100%'}} />}
-                    </Grid>
-                    <Grid justifyContent="center" sx={{textAlign: 'left'}} xs={4}>
-                        <IconButton onClick={handleCloseModal}><KeyboardReturnRoundedIcon sx={{ fontSize: 40 }}></KeyboardReturnRoundedIcon></IconButton>
-                    </Grid>
-                    <Grid justifyContent="center" xs={4}>
-                        <IconButton onClick={savePicture}><DownloadRoundedIcon sx={{ fontSize: 70, color: '#00a0e9' }}></DownloadRoundedIcon></IconButton>
-                    </Grid>
-                    <Grid justifyContent="center" xs={4}>
-
-                    </Grid>
-                    <Grid xs={4}></Grid>
+              <Grid container spacing={2} alignItems="flex-end">
+                <Grid justifyContent="center" xs={12}>
+                  {photoDataUrl && <img src={photoDataUrl} alt="Captured" style={{ width: '100%' }} />}
                 </Grid>
+                <Grid justifyContent="center" sx={{ textAlign: 'left' }} xs={4}>
+                  <IconButton onClick={handleCloseModal}><KeyboardReturnRoundedIcon sx={{ fontSize: 40, "@media screen and (min-width:700px)":{fontSize: 60} }}></KeyboardReturnRoundedIcon></IconButton>
+                </Grid>
+                <Grid justifyContent="center" xs={4}>
+                  <IconButton onClick={savePicture}><DownloadRoundedIcon sx={{ fontSize: 70, color: '#00a0e9' }}></DownloadRoundedIcon></IconButton>
+                </Grid>
+                <Grid justifyContent="center" xs={4}>
+
+                </Grid>
+                <Grid xs={4}></Grid>
+              </Grid>
             </Box>
           </Box>
         </Modal>
-      </div>
+      </Box>
     </ThemeProvider>
   );
 };
