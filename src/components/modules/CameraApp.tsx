@@ -4,14 +4,15 @@ import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 import KeyboardReturnRoundedIcon from '@mui/icons-material/KeyboardReturnRounded';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import FormControlLabel from '@mui/material/FormControlLabel';
 import IconButton from '@mui/material/IconButton';
 import Modal from '@mui/material/Modal';
+import Switch from '@mui/material/Switch';
 import Grid from '@mui/material/Unstable_Grid2';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-
 import { useEffect, useRef, useState } from 'react';
+import '../../css/index.css';
 import Carousel from './Carousel';
-
 
 
 const theme = createTheme({
@@ -21,6 +22,8 @@ const theme = createTheme({
     },
   },
 });
+
+
 
 const CameraApp = (props: {bgColor: string, frames: string[]}) => {
   const {bgColor} = props
@@ -33,6 +36,11 @@ const CameraApp = (props: {bgColor: string, frames: string[]}) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [selectedImage, setSelectedImage] = useState<string>(frames[0]);
+  const checkNames = ['mirorSwitch'] as const;
+  type checkName = typeof checkNames[number];
+  const [selectedMirorMode, setSelectedMirorMode] = useState<Record<checkName, boolean>>({
+    mirorSwitch: false,
+  });
 
   const getDevices = async (): Promise<void> => {
     await navigator.mediaDevices.getUserMedia({ video: true });
@@ -107,6 +115,10 @@ const CameraApp = (props: {bgColor: string, frames: string[]}) => {
       const currentIndex: number = devices.findIndex(device => device.deviceId === selectedDeviceId);
       const nextIndex: number = (currentIndex + 1) % devices.length;
       setSelectedDeviceId(devices[nextIndex].deviceId);
+      setSelectedMirorMode(prevState => ({
+        ...prevState,
+        'mirorSwitch' : false,
+      }))
     }
   };
 
@@ -128,6 +140,13 @@ const CameraApp = (props: {bgColor: string, frames: string[]}) => {
     setSelectedImage(imageSrc);
   };
 
+const changemirorSwitch = (event: React.ChangeEvent<HTMLInputElement>) =>{
+  const {name, checked} = event.target;
+  setSelectedMirorMode(prevState => ({
+    ...prevState,
+    [name] : checked,
+  }))
+}
 
   useEffect(() => {
     getDevices();
@@ -136,6 +155,15 @@ const CameraApp = (props: {bgColor: string, frames: string[]}) => {
   useEffect(() => {
     getStream();
   }, [selectedDeviceId]);
+
+  useEffect(() =>{
+    const cameraView = document.getElementById('cameraView')!
+    if(selectedMirorMode['mirorSwitch']){
+      cameraView.style.transform = 'scaleX(-1)'
+    }else{
+      cameraView.style.transform = 'scaleX(1)'
+    }
+  },[selectedMirorMode])
 
 
   return (
@@ -146,16 +174,18 @@ const CameraApp = (props: {bgColor: string, frames: string[]}) => {
             width: '100%',
             marginBottom: '-4px',
             }}>
-          <video ref={videoRef} autoPlay playsInline style={{ width: '100%', objectFit: 'cover', aspectRatio: '2/3', objectPosition: 'center' }} />
+          <video id="cameraView" ref={videoRef} autoPlay playsInline style={{ width: '100%', objectFit: 'cover', aspectRatio: '2/3', objectPosition: 'center'}} />
           <img src={selectedImage} alt='frame-img' style={{position: 'absolute', top: 0, left: 0, width: '100%', objectFit: 'cover'}}/>
         </Box>
+        <div className='camera-control-area'>
           <Box sx={{
             flexGrow: 1,
             textAlign: 'center',
             position: 'relative',
             padding: '2.5vh 2vw',
             background: bgColor,
-            }}>
+            }}
+            >
             <Grid container>
               <Grid justifyContent="center" xs={4}>
                 <Button color='secondary' onClick={switchCamera}><CameraswitchRoundedIcon sx={{ fontSize: 50, "@media screen and (min-width:700px)":{fontSize: 60}  }} /></Button>
@@ -165,7 +195,24 @@ const CameraApp = (props: {bgColor: string, frames: string[]}) => {
               </Grid>
               <Grid xs={4}></Grid>
             </Grid>
+            <Grid container sx={{marginTop: '1rem'}}>
+              <Grid justifyContent="center" xs={4}></Grid>
+              <Grid justifyContent="center" xs={4}>
+                  <FormControlLabel
+                      control={<Switch
+                      color="warning"
+                      name="mirorSwitch"
+                      checked={selectedMirorMode['mirorSwitch']}
+                      onChange={changemirorSwitch}
+                      />}
+                    label="鏡表示"
+                    labelPlacement="top"
+                  />
+              </Grid>
+              <Grid xs={4}></Grid>
+            </Grid>
           </Box>
+          </div>
         <Box sx={{ py: 2, textAlign: 'center', backgroundColor: '#262626' }}>
           <Carousel images={frames} onImageSelect={drawImageOnCanvas} />
         </Box>
