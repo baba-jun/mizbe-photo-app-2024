@@ -1,3 +1,4 @@
+import AddPhotoAlternateRoundedIcon from '@mui/icons-material/AddPhotoAlternateRounded';
 import CameraRoundedIcon from '@mui/icons-material/CameraRounded';
 import CameraswitchRoundedIcon from '@mui/icons-material/CameraswitchRounded';
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
@@ -127,6 +128,10 @@ const CameraApp = (props: {bgColor: string, frames: string[]}) => {
     }
   };
 
+  const importPicture = (): void => {
+
+  }
+
   const savePicture = (): void => {
     if (canvasRef.current) {
       const dataUrl = canvasRef.current.toDataURL('image/png');
@@ -201,7 +206,18 @@ const changemirorSwitch = (event: React.ChangeEvent<HTMLInputElement>) =>{
               <Grid justifyContent="center" xs={4}>
                 <Button color='secondary' onClick={takePicture}><CameraRoundedIcon sx={{ fontSize: 50, "@media screen and (min-width:700px)":{fontSize: 60}  }} /></Button>
               </Grid>
-              <Grid xs={4}></Grid>
+              <Grid xs={4}>
+              <Button
+                color='secondary'
+                component="label"
+                >
+                <AddPhotoAlternateRoundedIcon sx={{ fontSize: 50, "@media screen and (min-width:700px)":{fontSize: 60}  }}/>
+                <input
+                    type="file"
+                    className="inputFileBtnHide"
+                  />
+                </Button>
+              </Grid>
             </Grid>
             <Grid container sx={{marginTop: '1rem'}}>
               <Grid justifyContent="center" xs={4}></Grid>
@@ -242,12 +258,12 @@ const changemirorSwitch = (event: React.ChangeEvent<HTMLInputElement>) =>{
                 <Grid justifyContent="center" xs={12} sx={{position: 'relative', padding: 0, margin:1,}}>
                   {photoDataUrl && <img src={photoDataUrl} alt="Captured" style={{ width: '100%' }} />}
                   {(iosPlatforms.includes(platform) || (/Safari/.test(userAgent) && /Apple Computer/.test(navigator.vendor)))
-                  && <TouchAppIcon className='promote-icon' sx={{fontSize: 200, position: 'absolute', left: 0, bottom: '2vh', }}></TouchAppIcon>}
+                  && <TouchAppIcon className='promote-icon' sx={{fontSize: 90, position: 'absolute', left: 0, bottom: '2vh', }}></TouchAppIcon>}
                 </Grid>
                 <Grid xs={12} sx={{textAlign: 'left', fontSize: '1.2rem', lineHeight: '2rem'}}>
                   {(iosPlatforms.includes(platform) || (/Safari/.test(userAgent) && /Apple Computer/.test(navigator.vendor)))
                     &&
-                   <div id='iosSave'>
+                  <div id='iosSave'>
                     <p className='text'>{'写真を長押しして\n'}
                       <span className='text-em'>写真に追加</span>を押すと{'\n'}
                       写真を保存できます

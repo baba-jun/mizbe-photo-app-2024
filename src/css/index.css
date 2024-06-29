@@ -30,13 +30,13 @@ code {
 
 .promote-icon{
   animation-name: opacityAnimation;
-  animation-duration: 2.5s;
+  animation-duration: 2s;
   animation-iteration-count:infinite
 }
 
 @keyframes opacityAnimation {
   0%{
-    opacity: 40%;
+    opacity: 20%;
   }
   100%{
     opacity: 90%;
@@ -46,4 +46,10 @@ code {
 .text-em{
   font-weight: 800;
   background-color: yellow;
+}
+
+.inputFileBtnHide {
+  opacity:0;
+  appearance: none;
+  position: absolute;
 }
