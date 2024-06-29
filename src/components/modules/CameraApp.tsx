@@ -2,6 +2,7 @@ import CameraRoundedIcon from '@mui/icons-material/CameraRounded';
 import CameraswitchRoundedIcon from '@mui/icons-material/CameraswitchRounded';
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 import KeyboardReturnRoundedIcon from '@mui/icons-material/KeyboardReturnRounded';
+import TouchAppIcon from '@mui/icons-material/TouchApp';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -33,6 +34,7 @@ const CameraApp = (props: {bgColor: string, frames: string[]}) => {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [base64Images, setBase64Images] = useState<string[]>([]);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [selectedImage, setSelectedImage] = useState<string>(frames[0]);
@@ -41,6 +43,9 @@ const CameraApp = (props: {bgColor: string, frames: string[]}) => {
   const [selectedMirorMode, setSelectedMirorMode] = useState<Record<checkName, boolean>>({
     mirorSwitch: false,
   });
+  const userAgent = window.navigator.userAgent;
+  const platform = window.navigator.platform;
+  const iosPlatforms = ['iPhone', 'iPad', 'iPod'];
 
   const getDevices = async (): Promise<void> => {
     await navigator.mediaDevices.getUserMedia({ video: true });
@@ -132,6 +137,7 @@ const CameraApp = (props: {bgColor: string, frames: string[]}) => {
     }
   };
 
+
   const handleCloseModal = (): void => {
     setIsModalOpen(false);
   };
@@ -155,6 +161,8 @@ const changemirorSwitch = (event: React.ChangeEvent<HTMLInputElement>) =>{
   useEffect(() => {
     getStream();
   }, [selectedDeviceId]);
+
+
 
   useEffect(() =>{
     const cameraView = document.getElementById('cameraView')!
@@ -217,7 +225,8 @@ const changemirorSwitch = (event: React.ChangeEvent<HTMLInputElement>) =>{
           <Carousel images={frames} onImageSelect={drawImageOnCanvas} />
         </Box>
         <canvas ref={canvasRef} style={{ display: 'none' }} />
-        <Modal sx={{ width: '70%', margin: 'auto' }} open={isModalOpen} onClose={handleCloseModal}>
+        <Modal sx={{ width: {md: '50%', sm: '65%', xs: '65%'}, maxWidth: {md:400}, margin: 'auto' }} open={isModalOpen} onClose={handleCloseModal}>
+          <div className='img-preView'>
           <Box sx={{
             position: 'absolute',
             top: '50%',
@@ -230,22 +239,38 @@ const changemirorSwitch = (event: React.ChangeEvent<HTMLInputElement>) =>{
           }}>
             <Box sx={{ flexGrow: 1, textAlign: 'center' }}>
               <Grid container spacing={2} alignItems="flex-end">
-                <Grid justifyContent="center" xs={12}>
+                <Grid justifyContent="center" xs={12} sx={{position: 'relative', padding: 0, margin:1,}}>
                   {photoDataUrl && <img src={photoDataUrl} alt="Captured" style={{ width: '100%' }} />}
+                  {(iosPlatforms.includes(platform) || (/Safari/.test(userAgent) && /Apple Computer/.test(navigator.vendor)))
+                  && <TouchAppIcon className='promote-icon' sx={{fontSize: 200, position: 'absolute', left: 0, bottom: '2vh', }}></TouchAppIcon>}
+                </Grid>
+                <Grid xs={12} sx={{textAlign: 'left', fontSize: '1.2rem', lineHeight: '2rem'}}>
+                  {(iosPlatforms.includes(platform) || (/Safari/.test(userAgent) && /Apple Computer/.test(navigator.vendor)))
+                    &&
+                   <div id='iosSave'>
+                    <p className='text'>{'写真を長押しして\n'}
+                      <span className='text-em'>写真に追加</span>を押すと{'\n'}
+                      写真を保存できます
+                    </p>
+                  </div>
+                  }
                 </Grid>
                 <Grid justifyContent="center" sx={{ textAlign: 'left' }} xs={4}>
                   <IconButton onClick={handleCloseModal}><KeyboardReturnRoundedIcon sx={{ fontSize: 40, "@media screen and (min-width:700px)":{fontSize: 60} }}></KeyboardReturnRoundedIcon></IconButton>
                 </Grid>
-                <Grid justifyContent="center" xs={4}>
-                  <IconButton onClick={savePicture}><DownloadRoundedIcon sx={{ fontSize: 70, color: '#00a0e9' }}></DownloadRoundedIcon></IconButton>
-                </Grid>
-                <Grid justifyContent="center" xs={4}>
-
-                </Grid>
+                {!(iosPlatforms.includes(platform) || (/Safari/.test(userAgent) && /Apple Computer/.test(navigator.vendor)))
+                  &&
+                  <div id='otherSave'>
+                    <Grid justifyContent="center" xs={4}>
+                      <IconButton onClick={savePicture}><DownloadRoundedIcon sx={{ fontSize: 70, color: '#00a0e9' }}></DownloadRoundedIcon></IconButton>
+                    </Grid>
+                  </div>
+                  }
                 <Grid xs={4}></Grid>
               </Grid>
             </Box>
           </Box>
+          </div>
         </Modal>
       </Box>
     </ThemeProvider>

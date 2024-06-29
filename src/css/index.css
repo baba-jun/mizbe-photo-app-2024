@@ -21,3 +21,29 @@ code {
   font-family: 'Noto Sans JP';
   font-weight: 500;
 }
+
+.text {
+  white-space: pre-wrap;
+  font-family: 'Noto Sans JP';
+  font-weight: 500;
+}
+
+.promote-icon{
+  animation-name: opacityAnimation;
+  animation-duration: 2.5s;
+  animation-iteration-count:infinite
+}
+
+@keyframes opacityAnimation {
+  0%{
+    opacity: 40%;
+  }
+  100%{
+    opacity: 90%;
+  }
+}
+
+.text-em{
+  font-weight: 800;
+  background-color: yellow;
+}
