@@ -1,6 +1,8 @@
 import AddPhotoAlternateRoundedIcon from '@mui/icons-material/AddPhotoAlternateRounded';
+import CameraAltRoundedIcon from '@mui/icons-material/CameraAltRounded';
 import CameraRoundedIcon from '@mui/icons-material/CameraRounded';
 import CameraswitchRoundedIcon from '@mui/icons-material/CameraswitchRounded';
+import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 import KeyboardReturnRoundedIcon from '@mui/icons-material/KeyboardReturnRounded';
 import TouchAppIcon from '@mui/icons-material/TouchApp';
@@ -12,9 +14,11 @@ import Modal from '@mui/material/Modal';
 import Switch from '@mui/material/Switch';
 import Grid from '@mui/material/Unstable_Grid2';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import Cropper from 'react-easy-crop';
 import '../../css/index.css';
 import Carousel from './Carousel';
+import getCroppedImg from './getCroppedImg';
 
 
 const theme = createTheme({
@@ -35,10 +39,15 @@ const CameraApp = (props: {bgColor: string, frames: string[]}) => {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isCropModalOpen, setIsCropModalOpen] = useState<boolean>(false);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   const [base64Image, setBase64Image] = useState<string>('');
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const uploadedImageRef = useRef<HTMLImageElement>(null);
   const [selectedImage, setSelectedImage] = useState<string>(frames[0]);
   const checkNames = ['mirorSwitch'] as const;
   type checkName = typeof checkNames[number];
@@ -117,6 +126,29 @@ const CameraApp = (props: {bgColor: string, frames: string[]}) => {
     }
   };
 
+  const drawUploadImage = (): void => {
+    if(canvasRef.current && uploadedImageRef.current){
+      const context: CanvasRenderingContext2D | null = canvasRef.current.getContext('2d');
+      if (context) {
+        const FrameImg = new Image();
+        FrameImg.src = selectedImage;
+        canvasRef.current.height = uploadedImageRef.current.height;
+        canvasRef.current.width = uploadedImageRef.current.width;
+        context.drawImage(
+          uploadedImageRef.current,
+          0,
+          0,
+          canvasRef.current.width,
+          canvasRef.current.height
+        );
+        context.drawImage(FrameImg, 0, 0, canvasRef.current.width, canvasRef.current.height);
+        const dataUrl = canvasRef.current.toDataURL('image/png');
+        setPhotoDataUrl(dataUrl);
+        setIsModalOpen(true);
+      }
+    }
+  }
+
   const switchCamera = (): void => {
     if (devices.length > 1) {
       const currentIndex: number = devices.findIndex(device => device.deviceId === selectedDeviceId);
@@ -140,6 +172,7 @@ const CameraApp = (props: {bgColor: string, frames: string[]}) => {
           return;
         }
         setBase64Image(result);
+        setIsCropModalOpen(true);
       };
       reader.readAsDataURL(uploadImageFile);
     }
@@ -155,22 +188,40 @@ const CameraApp = (props: {bgColor: string, frames: string[]}) => {
     }
   };
 
+  const onCropComplete = useCallback((croppedArea, croppedAreaPixels) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
+
 
   const handleCloseModal = (): void => {
     setIsModalOpen(false);
   };
 
+  const handleCropCloseModal = async (): Promise<void> => {
+    if(!croppedAreaPixels) return;
+    try{
+      const croppedImage = await getCroppedImg(base64Image,croppedAreaPixels);
+      setBase64Image(croppedImage)
+    }catch (e){
+      console.error(e)
+    }
+    setIsCropModalOpen(false);
+  };
   const drawImageOnCanvas = (imageSrc: string): void => {
     setSelectedImage(imageSrc);
   };
 
-const changemirorSwitch = (event: React.ChangeEvent<HTMLInputElement>) =>{
-  const {name, checked} = event.target;
-  setSelectedMirorMode(prevState => ({
-    ...prevState,
-    [name] : checked,
-  }))
-}
+  const changemirorSwitch = (event: React.ChangeEvent<HTMLInputElement>) =>{
+    const {name, checked} = event.target;
+    setSelectedMirorMode(prevState => ({
+      ...prevState,
+      [name] : checked,
+    }))
+  }
+
+  const deleteImageLoaded = (): void =>{
+    setBase64Image('')
+  }
 
   useEffect(() => {
     getDevices();
@@ -185,6 +236,9 @@ const changemirorSwitch = (event: React.ChangeEvent<HTMLInputElement>) =>{
     if(base64Image){
       setIsImageLoaded(true);
       cameraView.style.display = 'none'
+    }else{
+      setIsImageLoaded(false);
+      cameraView.style.display = 'block'
     }
   },[base64Image])
 
@@ -208,8 +262,8 @@ const changemirorSwitch = (event: React.ChangeEvent<HTMLInputElement>) =>{
             width: '100%',
             marginBottom: '-4px',
             }}>
-          <video id="cameraView" ref={videoRef} autoPlay playsInline style={{ width: '100%', objectFit: 'cover', aspectRatio: '2/3', objectPosition: 'center', display: 'block'}} />
-          <img src={base64Image} style={{ width: '100%', objectFit: 'cover', objectPosition: 'center', display: isImageLoaded ? 'block' : 'none'}} />
+          <video id="cameraView" ref={videoRef} autoPlay playsInline style={{ width: '100%', objectFit: 'cover', aspectRatio: '2/3', objectPosition: 'center', display: base64Image && !isCropModalOpen ? 'none' : 'block'}} />
+          <img id='uploadedImage' ref={uploadedImageRef} src={base64Image} style={{ width: '100%', objectFit: 'cover', objectPosition: 'center', display: isImageLoaded && !isCropModalOpen  ? 'block' : 'none'}} />
           <img src={selectedImage} alt='frame-img' style={{position: 'absolute', top: 0, left: 0, width: '100%', objectFit: 'cover'}}/>
         </Box>
         <div className='camera-control-area'>
@@ -223,10 +277,13 @@ const changemirorSwitch = (event: React.ChangeEvent<HTMLInputElement>) =>{
             >
             <Grid container>
               <Grid justifyContent="center" xs={4}>
-                <Button color='secondary' onClick={switchCamera}><CameraswitchRoundedIcon sx={{ fontSize: 50, "@media screen and (min-width:700px)":{fontSize: 60}  }} /></Button>
+              {!isImageLoaded &&<Button color='secondary' onClick={switchCamera} ><CameraswitchRoundedIcon sx={{ fontSize: 50, "@media screen and (min-width:700px)":{fontSize: 60} }} /></Button>
+              }
+              {isImageLoaded && <Button color='secondary' onClick={deleteImageLoaded} component="label"><CameraAltRoundedIcon sx={{ fontSize: 50, "@media screen and (min-width:700px)":{fontSize: 60}  }}/></Button>}
               </Grid>
               <Grid justifyContent="center" xs={4}>
-                <Button color='secondary' onClick={takePicture}><CameraRoundedIcon sx={{ fontSize: 50, "@media screen and (min-width:700px)":{fontSize: 60}  }} /></Button>
+                {!isImageLoaded && <Button color='secondary' onClick={takePicture}><CameraRoundedIcon sx={{ fontSize: 50, "@media screen and (min-width:700px)":{fontSize: 60}}} /></Button>}
+                {isImageLoaded && <Button color='secondary' onClick={drawUploadImage}><CheckCircleRoundedIcon sx={{ fontSize: 50, "@media screen and (min-width:700px)":{fontSize: 60}}}></CheckCircleRoundedIcon></Button>}
               </Grid>
               <Grid xs={4}>
               <Button
@@ -238,13 +295,28 @@ const changemirorSwitch = (event: React.ChangeEvent<HTMLInputElement>) =>{
                     type="file"
                     className="inputFileBtnHide"
                     onChange={importPicture}
+                    style={{width:0}}
                   />
                 </Button>
               </Grid>
             </Grid>
-            <Grid container sx={{marginTop: '1rem'}}>
+            <Grid container sx={{marginTop: '0.5rem'}}>
+            <Grid justifyContent="center" xs={4}>
+            {!isImageLoaded && <span className="guide-label">カメラ切り替え</span>}
+            {isImageLoaded && <span className="guide-label">カメラに戻る</span>}
+            </Grid>
+            <Grid justifyContent="center" xs={4}>
+            {!isImageLoaded && <span className="guide-label">撮影</span>}
+            {isImageLoaded && <span className="guide-label">保存画面へ</span>}
+            </Grid>
+            <Grid justifyContent="center" xs={4}>
+              <span className="guide-label">アルバムから</span>
+            </Grid>
+            </Grid>
+            <Grid container sx={{marginTop: '0.5rem'}}>
               <Grid justifyContent="center" xs={4}></Grid>
               <Grid justifyContent="center" xs={4}>
+              {!isImageLoaded &&
                   <FormControlLabel
                       control={<Switch
                       color="warning"
@@ -253,8 +325,9 @@ const changemirorSwitch = (event: React.ChangeEvent<HTMLInputElement>) =>{
                       onChange={changemirorSwitch}
                       />}
                     label="鏡表示"
-                    labelPlacement="top"
+                    labelPlacement="bottom"
                   />
+                      }
               </Grid>
               <Grid xs={4}></Grid>
             </Grid>
@@ -277,7 +350,7 @@ const changemirorSwitch = (event: React.ChangeEvent<HTMLInputElement>) =>{
             p: 4,
           }}>
             <Box sx={{ flexGrow: 1, textAlign: 'center' }}>
-              <Grid container spacing={2} alignItems="flex-end">
+              <Grid container  alignItems="flex-end">
                 <Grid justifyContent="center" xs={12} sx={{position: 'relative', padding: 0, margin:1,}}>
                   {photoDataUrl && <img src={photoDataUrl} alt="Captured" style={{ width: '100%' }} />}
                   {(iosPlatforms.includes(platform) || (/Safari/.test(userAgent) && /Apple Computer/.test(navigator.vendor)))
@@ -306,11 +379,29 @@ const changemirorSwitch = (event: React.ChangeEvent<HTMLInputElement>) =>{
                   </div>
                   }
                 <Grid xs={4}></Grid>
+                <Grid xs={4}></Grid>
+                <Grid xs={4}>{!(iosPlatforms.includes(platform) || (/Safari/.test(userAgent) && /Apple Computer/.test(navigator.vendor))) &&<span className='guide-label'>保存する</span>}</Grid>
               </Grid>
             </Box>
           </Box>
           </div>
         </Modal>
+        <Modal open={isCropModalOpen} onClose={handleCropCloseModal}>
+        <div style={{ position: 'relative', width: '100%', height: '400px', background: '#fff' }}>
+          <Cropper
+            image={base64Image}
+            crop={crop}
+            zoom={zoom}
+            aspect={2 / 3}
+            onCropChange={setCrop}
+            onZoomChange={setZoom}
+            onCropComplete={onCropComplete}
+          />
+          <Button variant="contained" color="primary" onClick={handleCropCloseModal} style={{ position: 'absolute', bottom: 20, right: 20 }}>
+            Done
+          </Button>
+        </div>
+      </Modal>
       </Box>
     </ThemeProvider>
   );
