@@ -35,7 +35,8 @@ const CameraApp = (props: {bgColor: string, frames: string[]}) => {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [base64Images, setBase64Images] = useState<string[]>([]);
+  const [base64Image, setBase64Image] = useState<string>('');
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [selectedImage, setSelectedImage] = useState<string>(frames[0]);
@@ -128,8 +129,20 @@ const CameraApp = (props: {bgColor: string, frames: string[]}) => {
     }
   };
 
-  const importPicture = (): void => {
-
+  const importPicture = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if(files){
+      const uploadImageFile = files[0]
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result;
+        if (typeof result !== "string") {
+          return;
+        }
+        setBase64Image(result);
+      };
+      reader.readAsDataURL(uploadImageFile);
+    }
   }
 
   const savePicture = (): void => {
@@ -167,6 +180,14 @@ const changemirorSwitch = (event: React.ChangeEvent<HTMLInputElement>) =>{
     getStream();
   }, [selectedDeviceId]);
 
+  useEffect(() => {
+    const cameraView = document.getElementById('cameraView')!
+    if(base64Image){
+      setIsImageLoaded(true);
+      cameraView.style.display = 'none'
+    }
+  },[base64Image])
+
 
 
   useEffect(() =>{
@@ -187,7 +208,8 @@ const changemirorSwitch = (event: React.ChangeEvent<HTMLInputElement>) =>{
             width: '100%',
             marginBottom: '-4px',
             }}>
-          <video id="cameraView" ref={videoRef} autoPlay playsInline style={{ width: '100%', objectFit: 'cover', aspectRatio: '2/3', objectPosition: 'center'}} />
+          <video id="cameraView" ref={videoRef} autoPlay playsInline style={{ width: '100%', objectFit: 'cover', aspectRatio: '2/3', objectPosition: 'center', display: 'block'}} />
+          <img src={base64Image} style={{ width: '100%', objectFit: 'cover', objectPosition: 'center', display: isImageLoaded ? 'block' : 'none'}} />
           <img src={selectedImage} alt='frame-img' style={{position: 'absolute', top: 0, left: 0, width: '100%', objectFit: 'cover'}}/>
         </Box>
         <div className='camera-control-area'>
@@ -215,6 +237,7 @@ const changemirorSwitch = (event: React.ChangeEvent<HTMLInputElement>) =>{
                 <input
                     type="file"
                     className="inputFileBtnHide"
+                    onChange={importPicture}
                   />
                 </Button>
               </Grid>
