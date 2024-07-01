@@ -39,6 +39,7 @@ const CameraApp = (props: {bgColor: string, tateframes: string[], yokoframes: st
   const {tateframes: tateFrames} = props
   const {yokoframes: yokoFrames} = props
   const {squareframes: squareFrames} = props
+  const renderFlgRef = useRef(false)
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -49,6 +50,7 @@ const CameraApp = (props: {bgColor: string, tateframes: string[], yokoframes: st
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   const [base64Image, setBase64Image] = useState<string>('');
+  const [base64ImageOriginal, setBase64ImageOrigina] = useState<string>('');
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -177,6 +179,7 @@ const CameraApp = (props: {bgColor: string, tateframes: string[], yokoframes: st
           return;
         }
         setBase64Image(result);
+        setBase64ImageOrigina(result);
         setIsCropModalOpen(true);
       };
       reader.readAsDataURL(uploadImageFile);
@@ -205,7 +208,7 @@ const CameraApp = (props: {bgColor: string, tateframes: string[], yokoframes: st
   const handleCropCloseModal = async (): Promise<void> => {
     if(!croppedAreaPixels) return;
     try{
-      const croppedImage = await getCroppedImg(base64Image,croppedAreaPixels);
+      const croppedImage = await getCroppedImg(base64ImageOriginal,croppedAreaPixels);
       setBase64Image(croppedImage)
     }catch (e){
       console.error(e)
@@ -226,6 +229,7 @@ const CameraApp = (props: {bgColor: string, tateframes: string[], yokoframes: st
 
   const deleteImageLoaded = (): void =>{
     setBase64Image('')
+    setBase64ImageOrigina('')
   }
 
   const changeAspect = (event: React.ChangeEvent<HTMLInputElement>) =>{
@@ -265,6 +269,7 @@ const CameraApp = (props: {bgColor: string, tateframes: string[], yokoframes: st
   },[selectedMirorMode])
 
   useEffect(() =>{
+    if(renderFlgRef.current) {
     switch (aspectRate){
       case 1.5:
         setSelectedImage(tateFrames[0])
@@ -280,6 +285,12 @@ const CameraApp = (props: {bgColor: string, tateframes: string[], yokoframes: st
     default:
       setSelectedImage(tateFrames[0])
     }
+    if(isImageLoaded){
+      setIsCropModalOpen(true);
+    }
+  }else{
+    renderFlgRef.current = true
+  }
   },[aspectRate])
 
 
@@ -446,10 +457,10 @@ const CameraApp = (props: {bgColor: string, tateframes: string[], yokoframes: st
           }}>
         <div style={{ position: 'relative', width: '100%', height: '400px', background: '#fff' }}>
           <Cropper
-            image={base64Image}
+            image={base64ImageOriginal}
             crop={crop}
             zoom={zoom}
-            aspect={2 / 3}
+            aspect={1 / aspectRate}
             onCropChange={setCrop}
             onZoomChange={setZoom}
             onCropComplete={onCropComplete}
