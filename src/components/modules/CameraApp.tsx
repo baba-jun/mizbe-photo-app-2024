@@ -8,9 +8,12 @@ import KeyboardReturnRoundedIcon from '@mui/icons-material/KeyboardReturnRounded
 import TouchAppIcon from '@mui/icons-material/TouchApp';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import IconButton from '@mui/material/IconButton';
 import Modal from '@mui/material/Modal';
+import Radio from '@mui/material/Radio';
+import RadioGroup from '@mui/material/RadioGroup';
 import Switch from '@mui/material/Switch';
 import Grid from '@mui/material/Unstable_Grid2';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
@@ -31,9 +34,11 @@ const theme = createTheme({
 
 
 
-const CameraApp = (props: {bgColor: string, frames: string[]}) => {
+const CameraApp = (props: {bgColor: string, tateframes: string[], yokoframes: string[], squareframes: string[]}) => {
   const {bgColor} = props
-  const {frames} = props
+  const {tateframes: tateFrames} = props
+  const {yokoframes: yokoFrames} = props
+  const {squareframes: squareFrames} = props
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -48,7 +53,7 @@ const CameraApp = (props: {bgColor: string, frames: string[]}) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const uploadedImageRef = useRef<HTMLImageElement>(null);
-  const [selectedImage, setSelectedImage] = useState<string>(frames[0]);
+  const [selectedImage, setSelectedImage] = useState<string>(tateFrames[0]);
   const checkNames = ['mirorSwitch'] as const;
   type checkName = typeof checkNames[number];
   const [selectedMirorMode, setSelectedMirorMode] = useState<Record<checkName, boolean>>({
@@ -57,6 +62,7 @@ const CameraApp = (props: {bgColor: string, frames: string[]}) => {
   const userAgent = window.navigator.userAgent;
   const platform = window.navigator.platform;
   const iosPlatforms = ['iPhone', 'iPad', 'iPod'];
+  const [aspectRate, setAspectRate] = useState<number>(1.5)
 
   const getDevices = async (): Promise<void> => {
     await navigator.mediaDevices.getUserMedia({ video: true });
@@ -83,7 +89,6 @@ const CameraApp = (props: {bgColor: string, frames: string[]}) => {
             deviceId: { exact: selectedDeviceId },
             width: { ideal: 3000 },
             height: { ideal: 3000 },
-            aspectRatio: { exact: 1.5 }
           },
         });
         setStream(newStream);
@@ -103,7 +108,7 @@ const CameraApp = (props: {bgColor: string, frames: string[]}) => {
         const FrameImg = new Image();
         FrameImg.src = selectedImage;
         canvasRef.current.height = videoRef.current.videoHeight;
-        canvasRef.current.width = canvasRef.current.height / 1.5;
+        canvasRef.current.width = canvasRef.current.height / aspectRate;
         const OriginalVideoWidth: number = videoRef.current.videoWidth;
         const CroppedVideoWidth: number = canvasRef.current.width;
         const OriginalVideoHeight: number = canvasRef.current.height;
@@ -142,7 +147,7 @@ const CameraApp = (props: {bgColor: string, frames: string[]}) => {
           canvasRef.current.height
         );
         context.drawImage(FrameImg, 0, 0, canvasRef.current.width, canvasRef.current.height);
-        const dataUrl = canvasRef.current.toDataURL('image/png');
+        const dataUrl = canvasRef.current.toDataURL('image/jpg');
         setPhotoDataUrl(dataUrl);
         setIsModalOpen(true);
       }
@@ -180,7 +185,7 @@ const CameraApp = (props: {bgColor: string, frames: string[]}) => {
 
   const savePicture = (): void => {
     if (canvasRef.current) {
-      const dataUrl = canvasRef.current.toDataURL('image/png');
+      const dataUrl = canvasRef.current.toDataURL('image/jpg');
       const link = document.createElement('a');
       link.href = dataUrl;
       link.download = 'photo.png';
@@ -223,6 +228,13 @@ const CameraApp = (props: {bgColor: string, frames: string[]}) => {
     setBase64Image('')
   }
 
+  const changeAspect = (event: React.ChangeEvent<HTMLInputElement>) =>{
+    const cameraView = document.getElementById('cameraView')!
+    setAspectRate(Number(event.target.value))
+    cameraView.style.aspectRatio = String(1/aspectRate)
+  }
+
+
   useEffect(() => {
     getDevices();
   }, []);
@@ -243,7 +255,6 @@ const CameraApp = (props: {bgColor: string, frames: string[]}) => {
   },[base64Image])
 
 
-
   useEffect(() =>{
     const cameraView = document.getElementById('cameraView')!
     if(selectedMirorMode['mirorSwitch']){
@@ -252,6 +263,24 @@ const CameraApp = (props: {bgColor: string, frames: string[]}) => {
       cameraView.style.transform = 'scaleX(1)'
     }
   },[selectedMirorMode])
+
+  useEffect(() =>{
+    switch (aspectRate){
+      case 1.5:
+        setSelectedImage(tateFrames[0])
+      break;
+
+    case 1.0:
+        setSelectedImage(squareFrames[0])
+      break;
+
+    case 0.67:
+        setSelectedImage(yokoFrames[0])
+      break
+    default:
+      setSelectedImage(tateFrames[0])
+    }
+  },[aspectRate])
 
 
   return (
@@ -262,16 +291,16 @@ const CameraApp = (props: {bgColor: string, frames: string[]}) => {
             width: '100%',
             marginBottom: '-4px',
             }}>
-          <video id="cameraView" ref={videoRef} autoPlay playsInline style={{ width: '100%', objectFit: 'cover', aspectRatio: '2/3', objectPosition: 'center', display: base64Image && !isCropModalOpen ? 'none' : 'block'}} />
+          <video id="cameraView" ref={videoRef} autoPlay playsInline style={{ width: '100%', objectFit: 'cover', aspectRatio: String(1/aspectRate), objectPosition: 'center', display: base64Image && !isCropModalOpen ? 'none' : 'block'}} />
           <img id='uploadedImage' ref={uploadedImageRef} src={base64Image} style={{ width: '100%', objectFit: 'cover', objectPosition: 'center', display: isImageLoaded && !isCropModalOpen  ? 'block' : 'none'}} />
-          <img src={selectedImage} alt='frame-img' style={{position: 'absolute', top: 0, left: 0, width: '100%', objectFit: 'cover'}}/>
+          <img id="frameImage" src={selectedImage} alt='frame-img' style={{position: 'absolute', top: 0, left: 0, width: '100%', objectFit: 'cover'}}/>
         </Box>
         <div className='camera-control-area'>
           <Box sx={{
             flexGrow: 1,
             textAlign: 'center',
             position: 'relative',
-            padding: '2.5vh 2vw',
+            padding: '2.5vh 0vh 2vw 2vw',
             background: bgColor,
             }}
             >
@@ -313,8 +342,9 @@ const CameraApp = (props: {bgColor: string, frames: string[]}) => {
               <span className="guide-label">アルバムから</span>
             </Grid>
             </Grid>
-            <Grid container sx={{marginTop: '0.5rem'}}>
-              <Grid justifyContent="center" xs={4}></Grid>
+            <Grid container sx={{marginTop: '1rem'}}>
+              <Grid justifyContent="center" xs={4}>
+              </Grid>
               <Grid justifyContent="center" xs={4}>
               {!isImageLoaded &&
                   <FormControlLabel
@@ -331,10 +361,27 @@ const CameraApp = (props: {bgColor: string, frames: string[]}) => {
               </Grid>
               <Grid xs={4}></Grid>
             </Grid>
+            <Grid container sx={{marginTop: '1.5rem'}}>
+            <Grid justifyContent="center" xs={12}>
+            <FormControl>
+            <RadioGroup
+                row
+                aria-labelledby="demo-row-radio-buttons-group-label"
+                name="row-radio-buttons-group"
+                defaultValue={1.5}
+                onChange={changeAspect}
+              >
+                <FormControlLabel value={1.5} control={<Radio color='secondary' />} label="縦長" />
+                <FormControlLabel value={0.67} control={<Radio  color='secondary'/>} label="横長" />
+                <FormControlLabel value={1} control={<Radio  color='secondary'/>} label="正方形" />
+              </RadioGroup>
+              </FormControl>
+              </Grid>
+            </Grid>
           </Box>
           </div>
         <Box sx={{ py: 2, textAlign: 'center', backgroundColor: '#262626' }}>
-          <Carousel images={frames} onImageSelect={drawImageOnCanvas} />
+          <Carousel tateImages={tateFrames} yokoImages={yokoFrames} squareImages={squareFrames} rate={aspectRate} onImageSelect={drawImageOnCanvas} />
         </Box>
         <canvas ref={canvasRef} style={{ display: 'none' }} />
         <Modal sx={{ width: {md: '50%', sm: '65%', xs: '65%'}, maxWidth: {md:400}, margin: 'auto' }} open={isModalOpen} onClose={handleCloseModal}>
@@ -386,7 +433,17 @@ const CameraApp = (props: {bgColor: string, frames: string[]}) => {
           </Box>
           </div>
         </Modal>
-        <Modal open={isCropModalOpen} onClose={handleCropCloseModal}>
+        <Modal sx={{ width: {md: '60%', sm: '75%', xs: '75%'}, maxWidth: {md:400}, margin: 'auto' }} open={isCropModalOpen} onClose={handleCropCloseModal}>
+          <Box sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: '100%',
+            bgcolor: 'background.paper',
+            boxShadow: 24,
+            p: 2,
+          }}>
         <div style={{ position: 'relative', width: '100%', height: '400px', background: '#fff' }}>
           <Cropper
             image={base64Image}
@@ -398,9 +455,10 @@ const CameraApp = (props: {bgColor: string, frames: string[]}) => {
             onCropComplete={onCropComplete}
           />
           <Button variant="contained" color="primary" onClick={handleCropCloseModal} style={{ position: 'absolute', bottom: 20, right: 20 }}>
-            Done
+            トリミングする
           </Button>
         </div>
+        </Box>
       </Modal>
       </Box>
     </ThemeProvider>

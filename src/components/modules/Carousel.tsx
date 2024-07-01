@@ -3,11 +3,14 @@ import React from 'react';
 import Slider from 'react-slick';
 
 interface CarouselProps {
-  images: string[];
+  tateImages: string[];
+  yokoImages: string[];
+  squareImages: string[];
+  rate: number;
   onImageSelect: (image: string) => void;
 }
 
-const Carousel: React.FC<CarouselProps> = ({ images, onImageSelect }) => {
+const Carousel: React.FC<CarouselProps> = ({ tateImages: tateImg, yokoImages: yokoImg, squareImages: squareImg, rate: aspectRate, onImageSelect }) => {
   const settings = {
     dots: true,
     infinite: false,
@@ -41,10 +44,28 @@ const Carousel: React.FC<CarouselProps> = ({ images, onImageSelect }) => {
     ],
   };
 
+  let setImages: string[];
+
+  switch(aspectRate){
+    case 1.5:
+      setImages = tateImg;
+      break;
+
+    case 1.0:
+      setImages = squareImg;
+      break;
+
+    case 0.67:
+      setImages = yokoImg;
+      break
+    default:
+      setImages = tateImg;
+  }
+
   return (
     <div style={{width: '100%', overflow: 'hidden' }}>
       <Slider {...settings}>
-        {images.map((image, index) => (
+        {setImages.map((image, index) => (
           <div key={index} onClick={() => onImageSelect(image)}>
             <img src={image} alt={`carousel-${index}`} style={{margin: '0 auto', width: '75%', border: '2px solid white' }} />
           </div>
